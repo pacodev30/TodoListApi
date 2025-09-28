@@ -3,9 +3,13 @@ using TodoListApi.Data.Models;
 
 namespace TodoListApi.Data;
 
-public class TodoApiDb(DbContextOptions<DbContext> options) : DbContext(options)
+public class TodoApiContext : DbContext
 {
-    public DbSet<Todo> Todos {  get; set; }
+    public TodoApiContext(DbContextOptions<TodoApiContext> options)
+    : base(options)
+    {
+    }
+    public DbSet<Todo> Todos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -15,5 +19,4 @@ public class TodoApiDb(DbContextOptions<DbContext> options) : DbContext(options)
         });
         base.OnModelCreating(modelBuilder);
     }
-    
 }

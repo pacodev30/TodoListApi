@@ -1,19 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Client;
 using TodoListApi.Data.Models;
+using TodoListApi.Services;
+using FluentValidation;
+using TodoListApi.Dto;
 
 namespace TodoListApi.Endpoints;
 
 public static class TodoEndpoints
 {
-    public static IServiceCollection AddTodoServices(this IServiceCollection services)
+    public static IServiceCollection MapTodoServices(this IServiceCollection services)
     {
+        services.AddScoped<ITodoService, EFCoreTodoService>();
         return services;
     }
     public static RouteGroupBuilder MapTodoEndpoints(this RouteGroupBuilder routeBuilder)
     {
         routeBuilder.MapGet("", GetAll);
-        routeBuilder.MapGet("{id:int}", GetById);
+        routeBuilder.MapGet("{id:int}", GetById)
+            .WithName("GetById");
         routeBuilder.MapGet("actives", GetActives);
         routeBuilder.MapPost("", Create);
         routeBuilder.MapDelete("{id:int}", Delete);
@@ -21,29 +25,68 @@ public static class TodoEndpoints
 
         return routeBuilder;
     }
-
-    private static IResult GetAll()
+    // GetAll
+    private async static Task<IResult> GetAll(
+        [FromServices] ITodoService service)
     {
-        return Results.Ok("GetAll");
+        var todos = await service.GetAll();
+        return Results.Ok(todos);
     }
-    private static IResult GetById([FromRoute] int id)
+    // GetById
+    private static async Task<IResult> GetById(
+        [FromRoute] int id,
+        [FromServices] ITodoService service)
     {
-        return Results.Ok($"GetById : {id}");
+        var todo = await service.GetById(id);
+        if(todo is null) return Results.NotFound();
+        return Results.Ok(todo);
     }
-    private static IResult GetActives() 
+    // GetActives
+    private static async Task<IResult> GetActives(
+        [FromServices] ITodoService service) 
     {
-        return Results.Ok("GetActive");
+        var todos = await service.GetActives();
+        return Results.Ok(todos);
     }
-    private static IResult Create([FromBody] Todo t)
+    // Create
+    private static async Task<IResult> Create(
+        [FromBody] TodoInputModel newTodo,
+        [FromServices] ITodoService Service,
+        [FromServices] IValidator<TodoInputModel> validator,
+        [FromServices] LinkGenerator linkGenerator,
+        HttpContext httpContext)
     {
-        return Results.Ok(t);
+        var result = validator.Validate(newTodo);
+        if(!result.IsValid)
+        {
+            var error = result.Errors.Select(e => new 
+            {
+                e.ErrorMessage,
+                e.PropertyName
+            });
+            return Results.BadRequest(error);
+        }
+        var createdValue = await Service.Create(newTodo);
+        var link = linkGenerator.GetUriByName(httpContext, "GetById", new {id = createdValue.Id});
+        return Results.Created(link, createdValue);
     }
-    private static IResult Delete(int id) 
+    // Delete
+    private async static Task<IResult> Delete(
+        [FromRoute] int id,
+        [FromServices] ITodoService service) 
     {
-        return Results.Ok($"Deleted : {id}");
+        var todoToDelete = await service.Delete(id);
+        if(!todoToDelete) return Results.NotFound();
+        return Results.NoContent();
     }
-    private static IResult Update(int id)
+    // Update
+    private async static Task<IResult> Update(
+        [FromRoute] int id,
+        [FromBody] TodoInputModel todo,
+        [FromServices] ITodoService service)
     {
-        return Results.Ok($"Updated {id}") ; 
+        var dbTodo = await service.Update(id, todo);
+        if(!dbTodo) return Results.NotFound();
+        return Results.Ok(dbTodo);
     }
 }

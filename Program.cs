@@ -1,14 +1,32 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TodoListApi.Data;
 using TodoListApi.Endpoints;
+using Serilog;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddTodoServices();
-//builder.Services.AddDbContext<TodoApiDb>(opt => opt.UseSqlServer(
-//    builder.Configuration.GetConnectionString("SqlServer")));
+// -- SERVICES
+builder.Services.AddDbContext<TodoApiContext>(opt => opt.UseSqlServer(
+    builder.Configuration.GetConnectionString("SqlServer")));
+builder.Services.MapTodoServices();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+// Serilog
+builder.Logging.ClearProviders();
+var loggerConfiguration = new LoggerConfiguration()
+        //.WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day)
+        .WriteTo.Console();
+var logger = loggerConfiguration.CreateLogger();
+builder.Logging.AddSerilog(logger);
+
+// -- APP
 var app = builder.Build();
+
+await app.Services
+    .CreateScope().ServiceProvider
+    .GetRequiredService<TodoApiContext>().Database
+    .MigrateAsync();
 
 app.MapGroup("/todos")
     .MapTodoEndpoints();

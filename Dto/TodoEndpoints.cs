@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TodoListApi.Data.Models;
 using TodoListApi.Services;
 using FluentValidation;
-using TodoListApi.Dto;
+using TodoListApi.Data.Models;
 
-namespace TodoListApi.Endpoints;
+namespace TodoListApi.Dto;
 
 public static class TodoEndpoints
 {
@@ -15,13 +14,42 @@ public static class TodoEndpoints
     }
     public static RouteGroupBuilder MapTodoEndpoints(this RouteGroupBuilder routeBuilder)
     {
-        routeBuilder.MapGet("", GetAll);
+        // GET todos
+        routeBuilder.MapGet("", GetAll)
+            .Produces(404)
+            .Produces(200)
+            .WithName("GetAll")
+            .WithTags("todoManagement");
+        // GET todos/1
         routeBuilder.MapGet("{id:int}", GetById)
-            .WithName("GetById");
-        routeBuilder.MapGet("actives", GetActives);
-        routeBuilder.MapPost("", Create);
-        routeBuilder.MapDelete("{id:int}", Delete);
-        routeBuilder.MapPut("{id:int}", Update);
+            .Produces(404)
+            .Produces(200)
+            .WithName("GetById")
+            .WithTags("todoManagement");
+        // GET todos/actives
+        routeBuilder.MapGet("actives", GetActives)
+            .Produces(404)
+            .Produces(200)
+            .WithName("GetActives")
+            .WithTags("todoManagement");
+        // POST todos
+        routeBuilder.MapPost("", Create)
+            .Produces(400)
+            .Produces(202)
+            .WithName("Create")
+            .WithTags("todoManagement");
+        // DELETE todos/1
+        routeBuilder.MapDelete("{id:int}", Delete)
+            .Produces(404)
+            .Produces(204)
+            .WithName("Delete")
+            .WithTags("todoManagement");
+        // PUT todos/1
+        routeBuilder.MapPut("{id:int}", Update)
+            .Produces(404)
+            .Produces(201)
+            .WithName("Update")
+            .WithTags("todoManagement");
 
         return routeBuilder;
     }
@@ -83,10 +111,13 @@ public static class TodoEndpoints
     private async static Task<IResult> Update(
         [FromRoute] int id,
         [FromBody] TodoInputModel todo,
-        [FromServices] ITodoService service)
+        [FromServices] ITodoService service,
+        [FromServices] LinkGenerator linkGenerator,
+        HttpContext httpContext)
     {
         var dbTodo = await service.Update(id, todo);
         if(!dbTodo) return Results.NotFound();
-        return Results.Ok(dbTodo);
+        var link = linkGenerator.GetUriByName(httpContext, "GetById", id);
+        return Results.Created(link, dbTodo);
     }
 }

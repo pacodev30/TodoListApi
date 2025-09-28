@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TodoListApi.Data;
-using TodoListApi.Endpoints;
 using Serilog;
 using FluentValidation;
+using TodoListApi.Dto;
 
 var builder = WebApplication.CreateBuilder(args);
 

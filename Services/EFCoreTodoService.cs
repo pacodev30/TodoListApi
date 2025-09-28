@@ -1,42 +1,46 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TodoListApi.Data;
 using TodoListApi.Data.Models;
-using TodoListApi.Dto;
 
 namespace TodoListApi.Services
 {
     public class EFCoreTodoService(TodoApiContext context) : ITodoService
     {
         private readonly TodoApiContext _context = context;
+        private TodoOutputModel ToOutputModel(Todo todo)
+           =>  new(todo.Id, todo.Title, todo.CreatedDate, todo.IsActive);
 
-        public async Task<List<Todo>> GetAll()
+        public async Task<List<TodoOutputModel>> GetAll()
         {
             var todos = await _context.Todos.ToListAsync();
-            return todos;
+            var outputTodos = todos.ConvertAll(ToOutputModel);
+            return outputTodos;
+            
         }
-        public async Task<Todo?> GetById(int id)
+        public async Task<TodoOutputModel?> GetById(int id)
         {
             var todo = await _context.Todos.Where(t =>  t.Id == id).FirstOrDefaultAsync();
             if (todo is null) return null;
-            return todo;
+            return ToOutputModel(todo);
         }
-        public async Task<List<Todo>> GetActives()
+        public async Task<List<TodoOutputModel>> GetActives()
         {
             var todos = await _context.Todos.Where(t => t.IsActive == true).ToListAsync();
-            return todos;
+            var outputTodos = todos.ConvertAll(ToOutputModel);
+            return outputTodos;
         }
 
-        public async Task<Todo> Create(TodoInputModel newTodo)
+        public async Task<TodoOutputModel> Create(TodoInputModel newTodo)
         {
-            var dbTodo = new Todo 
+            var dbTodo = new Todo
             {
                 Title = newTodo.Title,
                 CreatedDate = newTodo.CreatedDate.GetValueOrDefault(),
-                IsActive = newTodo.IsActive
+                IsActive = newTodo.IsActive.GetValueOrDefault()
             };
             _context.Todos.Add(dbTodo);
             await _context.SaveChangesAsync();
-            return dbTodo;
+            return ToOutputModel(dbTodo);
         }
 
         public async Task<bool> Delete(int id)

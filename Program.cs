@@ -2,7 +2,8 @@
 using TodoListApi.Data;
 using Serilog;
 using FluentValidation;
-using TodoListApi.Dto;
+using TodoListApi.Endpoints;
+using TodoListApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<TodoApiContext>(opt => opt.UseSqlServer(
     builder.Configuration.GetConnectionString("SqlServer")));
 builder.Services.MapTodoServices();
+builder.Services.MapUserServices();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // Serilog
@@ -30,5 +33,7 @@ await app.Services
 
 app.MapGroup("/todos")
     .MapTodoEndpoints();
+app.MapGroup("/users")
+    .MapUserEndpoints();
 
 app.Run();

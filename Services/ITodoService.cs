@@ -4,11 +4,11 @@ namespace TodoListApi.Services
 {
     public interface ITodoService
     {
-        Task<List<TodoOutputModel>> GetAll();
-        Task<TodoOutputModel?> GetById(int id);
-        Task<List<TodoOutputModel>> GetActives();
-        Task<TodoOutputModel> Create(TodoInputModel newTodo);
-        Task<bool> Delete(int id);
-        Task<bool> Update(int id, TodoInputModel todoUpdated);
+        Task<List<TodoOutputModel>> GetAll(int userID);
+        Task<TodoOutputModel?> GetById(int id, int userID);
+        Task<List<TodoOutputModel>> GetActives(int userID);
+        Task<TodoOutputModel> Add(TodoInputModel newTodo, int userID);
+        Task<bool> Delete(int id, int userID);
+        Task<bool> Update(int id, int userID, TodoInputModel todoUpdated);
     }
 }

@@ -6,6 +6,6 @@ public class Todo
     public string Title { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; } = DateTime.Now;
     public bool IsActive { get; set; } = true;
-    //public required User User { get; set; }
-    //public int UserId { get; set; }
+    public virtual User User { get; set; }
+    public int UserId { get; set; }
 }

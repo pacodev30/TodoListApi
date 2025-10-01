@@ -28,7 +28,7 @@ public class TodoApiContext : DbContext
         {
             u.ToTable("users");
             u.HasKey(u => u.Id);
-            u.Property(u => u.Name).HasMaxLength(126);
+            u.Property(u => u.Name).HasMaxLength(128);
             u.Property(u => u.Token).HasMaxLength(16);
             u.HasMany(o => o.Todos).WithOne(o => o.User).HasForeignKey(o => o.UserId);
             u.HasIndex(t => t.Token).IsUnique();

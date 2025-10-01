@@ -16,40 +16,42 @@ public static class TodoEndpoints
     {
         // GET todos
         routeBuilder.MapGet("", GetAll)
-            .Produces(404)
-            .Produces(200)
+            .WithTags("todoManagement")
             .WithName("GetAll")
-            .WithTags("todoManagement");
+            .Produces<TodoOutputModel[]>(200, "application/json")
+            .Produces(401);
         // GET todos/1
         routeBuilder.MapGet("{id:int}", GetById)
-            .Produces(404)
-            .Produces(200)
+            .WithTags("todoManagement")
             .WithName("GetById")
-            .WithTags("todoManagement");
+            .Produces<TodoOutputModel>(200, "application/json")
+            .Produces(401);
         // GET todos/actives
         routeBuilder.MapGet("actives", GetActives)
-            .Produces(404)
-            .Produces(200)
+            .WithTags("todoManagement")
             .WithName("GetActives")
-            .WithTags("todoManagement");
+            .Produces<TodoOutputModel[]>(200, "application/json")
+            .Produces(401);
         // POST todos
         routeBuilder.MapPost("", Add)
-            .Produces(400)
-            .Produces(202)
+            .WithTags("todoManagement")
             .WithName("Create")
-            .WithTags("todoManagement");
+            .Produces(201)
+            .Produces(400)
+            .Produces(401);
         // DELETE todos/1
         routeBuilder.MapDelete("{id:int}", Delete)
-            .Produces(404)
-            .Produces(204)
+            .WithTags("todoManagement")
             .WithName("Delete")
-            .WithTags("todoManagement");
+            .Produces(204)
+            .Produces(401);
         // PUT todos/1
         routeBuilder.MapPut("{id:int}", Update)
-            .Produces(404)
-            .Produces(201)
+            .WithTags("todoManagement")
             .WithName("Update")
-            .WithTags("todoManagement");
+            .Produces(204)
+            .Produces(400)
+            .Produces(401);
 
         return routeBuilder;
     }
@@ -99,20 +101,20 @@ public static class TodoEndpoints
         logger.LogInformation($"Get {todos.Count} todos actives");
         return Results.Ok(todos);
     }
-    // Create
+    // Add
     private static async Task<IResult> Add(
         [FromBody] TodoInputModel newTodo,
         [FromServices] ITodoService service,
-        [FromServices] IValidator<TodoInputModel> validator,
         [FromServices] ILogger<Program> logger,
         [FromServices] LinkGenerator linkGenerator,
         [FromServices] AuthService authService,
+        [FromServices] IValidator<TodoInputModel> validator,
         HttpContext httpContext)
     {
-        var result = validator.Validate(newTodo);
-        if(!result.IsValid)
+        var validationResult = validator.Validate(newTodo);
+        if(!validationResult.IsValid)
         {
-            var error = result.Errors.Select(e => new 
+            var error = validationResult.Errors.Select(e => new 
             {
                 e.ErrorMessage,
                 e.PropertyName
@@ -152,8 +154,14 @@ public static class TodoEndpoints
         [FromServices] ILogger<Program> logger,
         [FromServices] LinkGenerator linkGenerator,
         [FromServices] AuthService authService,
+        [FromServices] IValidator<TodoInputModel> validator,
         HttpContext httpContext)
     {
+        var validationResult = validator.Validate(todo);
+        if (!validationResult.IsValid) return Results.BadRequest(validationResult.Errors);
+
+        if (id < 0) return Results.BadRequest();
+
         var userId = await authService.GetIdUserFromToken(httpContext);
         if (!userId.HasValue) return Results.Unauthorized();
 

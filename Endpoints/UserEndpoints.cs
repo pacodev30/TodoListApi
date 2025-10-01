@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using TodoListApi.Data;
 using TodoListApi.Data.Models;
+using TodoListApi.Validation;
 
 namespace TodoListApi.Endpoints
 {
@@ -15,14 +17,21 @@ namespace TodoListApi.Endpoints
 
         public static RouteGroupBuilder MapUserEndpoints(this RouteGroupBuilder routeBuilder) 
         {
-            routeBuilder.MapPost("", Add);
+            routeBuilder.MapPost("", Add)
+                .WithTags("UserManagement")
+                .Produces(400)
+                .Produces<UserOutputModel>(200, "application/json");
             return routeBuilder;
         }
 
         private static async Task<IResult> Add(
-            [FromBody] UserInputModel userModel,
-            [FromServices] TodoApiContext context)
+            [FromBody] UserInputModel inputModel,
+            [FromServices] TodoApiContext context,
+            [FromServices] IValidator<UserInputModel> validator)
         {
+            var validationResult = validator.Validate(inputModel);
+            if (!validationResult.IsValid) return Results.BadRequest(validationResult.Errors);
+
             var sb = new StringBuilder(16);
             for (int i = 0; i < 16; i++)
             {
@@ -30,7 +39,7 @@ namespace TodoListApi.Endpoints
             }
             var user = new User 
             {
-                Name = userModel.Name,
+                Name = inputModel.Name,
                 Token = sb.ToString(),
             };
             context.Users.Add(user);

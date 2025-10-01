@@ -61,8 +61,8 @@ namespace TodoListApi.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(126)
-                        .HasColumnType("nvarchar(126)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Token")
                         .IsRequired()

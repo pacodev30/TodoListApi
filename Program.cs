@@ -14,6 +14,8 @@ builder.Services.MapTodoServices();
 builder.Services.MapUserServices();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddSwaggerGen();
+builder.Services.AddEndpointsApiExplorer();
 
 // Serilog
 builder.Logging.ClearProviders();
@@ -25,6 +27,11 @@ builder.Logging.AddSerilog(logger);
 
 // -- APP
 var app = builder.Build();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 await app.Services
     .CreateScope().ServiceProvider

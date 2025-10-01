@@ -12,7 +12,7 @@ using TodoListApi.Data;
 namespace TodoListApi.Data.Migrations
 {
     [DbContext(typeof(TodoApiContext))]
-    [Migration("20250929172310_InitialMigration")]
+    [Migration("20251001152715_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -64,8 +64,8 @@ namespace TodoListApi.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(126)
-                        .HasColumnType("nvarchar(126)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Token")
                         .IsRequired()
